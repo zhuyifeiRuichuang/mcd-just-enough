@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>麦麦刚刚好 · 份量报告</title>
+<style>
+  :root {
+    --bg: #f7f7f8;
+    --card: #ffffff;
+    --text: #1f2328;
+    --muted: #6b7280;
+    --line: #e5e7eb;
+    --red: #da291c;
+    --gold: #ffc72c;
+    --warn: #b45309;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 32px 16px 56px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; }
+  header.top {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-top: 4px solid var(--red);
+    border-radius: 14px;
+    padding: 24px 28px;
+    margin-bottom: 20px;
+  }
+  h1 { margin: 0 0 6px; font-size: 26px; letter-spacing: .5px; }
+  .sub { color: var(--muted); font-size: 14px; margin: 0 0 16px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    background: #fdf2f2; border: 1px solid #f6d5d2; color: #7f1d1d;
+    border-radius: 999px; padding: 4px 12px; font-size: 13px;
+  }
+  .chip.gold { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+  .summary {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 20px 28px; margin-bottom: 20px;
+  }
+  .summary h2 { margin: 0 0 12px; font-size: 18px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; }
+  .grid div { background: #fafafa; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .grid span { display: block; color: var(--muted); font-size: 12px; }
+  .grid b { font-size: 18px; }
+  .tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(310px, 1fr)); gap: 18px; }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    padding: 20px 22px;
+  }
+  .card.empty { opacity: .75; }
+  .card-head { display: flex; align-items: center; justify-content: space-between; }
+  .card h3 { margin: 0; font-size: 19px; }
+  .pill {
+    background: var(--gold); color: #3b2f00; border-radius: 999px;
+    padding: 3px 12px; font-size: 12px; font-weight: 600;
+  }
+  .bar {
+    margin: 14px 0 4px; padding: 10px 12px; background: #0f172a; color: #e5e7eb;
+    border-radius: 8px; font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    font-size: 15px; overflow-x: auto; letter-spacing: 1px;
+  }
+  .bar-note { margin: 0 0 14px; color: var(--muted); font-size: 12px; }
+  table.items { width: 100%; border-collapse: collapse; font-size: 14px; }
+  table.items th { text-align: left; color: var(--muted); font-weight: 500; font-size: 12px;
+    border-bottom: 1px solid var(--line); padding: 6px 0; }
+  table.items td { border-bottom: 1px solid #f3f4f6; padding: 7px 0; }
+  .cat { color: var(--muted); font-size: 12px; }
+  .num { text-align: right; }
+  ul.metrics { list-style: none; margin: 14px 0 0; padding: 0;
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 13px; }
+  ul.metrics li { background: #fafafa; border: 1px solid var(--line);
+    border-radius: 8px; padding: 8px 10px; display: flex; justify-content: space-between; }
+  ul.metrics span { color: var(--muted); }
+  .warn { color: var(--warn); }
+  .price-line { margin: 14px 0 0; font-size: 13px; color: #374151; }
+  .reason { margin: 8px 0 0; font-size: 13px; color: #374151; }
+  .feedback { margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--line);
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .fb-label { font-size: 12px; color: var(--muted); }
+  button {
+    border: 1px solid var(--line); background: #fff; color: var(--text);
+    border-radius: 8px; padding: 6px 14px; font-size: 13px; cursor: pointer;
+  }
+  button:hover { border-color: var(--red); color: var(--red); }
+  button.active { background: var(--red); border-color: var(--red); color: #fff; }
+  .fb-out {
+    margin-top: 18px; background: #0f172a; color: #e5e7eb; border-radius: 10px;
+    padding: 14px 16px; font-size: 12.5px; display: none;
+  }
+  .fb-out.show { display: block; }
+  .fb-out code { color: #fde68a; word-break: break-all; }
+  .fb-out button { margin-top: 10px; }
+  .muted { color: var(--muted); font-size: 13px; }
+  footer { margin-top: 26px; color: var(--muted); font-size: 12.5px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px 22px; }
+  footer p { margin: 0 0 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>麦麦刚刚好 · 份量报告</h1>
+    <p class="sub">不追求最便宜，也不追求热量最低，只回答：这一顿点多少才刚刚好。</p>
+    <div class="chips">
+      <span class="chip">1 人</span>
+      <span class="chip">solo</span>
+      <span class="chip">dine_in</span>
+      <span class="chip gold">胃口线 700.0 kcal</span>
+      <span class="chip">内置样例数据（离线演示，非实时）</span>
+    </div>
+  </header>
+
+  <section class="summary">
+    <h2>这一顿的判断依据</h2>
+    <div class="grid">
+      <div><span>食量档位</span><b>normal</b></div>
+      <div><span>场景系数</span><b>solo</b></div>
+      <div><span>就餐方式</span><b>dine_in</b></div>
+      <div><span>预算上限</span><b>40 元</b></div>
+      <div><span>个人份量系数</span><b>1.0</b></div>
+      <div><span>历史反馈样本</span><b>0</b></div>
+    </div>
+    <p class='muted'>首次使用，按通用基准估算；餐后回一句即可开始校准。</p>
+  </section>
+
+  <section class="tiers">
+
+    <section class="card">
+      <div class="card-head">
+        <h3>保守档</h3>
+        <span class="pill">470.0 kcal</span>
+      </div>
+      <pre class="bar">[=========·····|·······]</pre>
+      <p class="bar-note">| 为胃口线，= 为本档份量</p>
+      <table class="items">
+        <thead><tr><th>餐品</th><th>类别</th><th>份数</th><th>小计</th></tr></thead>
+        <tbody>
+      <tr><td>麦香鱼</td><td class="cat">main</td><td class="num">×1</td><td class="num">¥15.0</td></tr>
+      <tr><td>热牛奶</td><td class="cat">drink</td><td class="num">×1</td><td class="num">¥8.0</td></tr>
+        </tbody>
+      </table>
+      <ul class="metrics">
+        <li><span>蛋白质</span><b>23.0 g</b></li>
+        <li><span>合计</span><b>¥23.0</b></li>
+        <li><span>预估浪费</span><b class="warn">0% · ¥0.0</b></li>
+        <li><span>匹配度</span><b>94.1</b></li>
+      </ul>
+      <p class="price-line">菜单合计 ¥23.0（未含券，待 calculate-price 核价）</p>
+      <p class="reason">低于胃口线，适合真的不饿或想控制摄入。</p>
+      <div class="feedback">
+        <span class="fb-label">吃完回一句：</span>
+        <button type="button" onclick="pick('e70bd8948f57','conservative','under',this)">没吃够</button>
+        <button type="button" onclick="pick('e70bd8948f57','conservative','fit',this)">刚好</button>
+        <button type="button" onclick="pick('e70bd8948f57','conservative','over',this)">有剩余</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h3>刚好档</h3>
+        <span class="pill">600.0 kcal</span>
+      </div>
+      <pre class="bar">[============··|·······]</pre>
+      <p class="bar-note">| 为胃口线，= 为本档份量</p>
+      <table class="items">
+        <thead><tr><th>餐品</th><th>类别</th><th>份数</th><th>小计</th></tr></thead>
+        <tbody>
+      <tr><td>热牛奶</td><td class="cat">drink</td><td class="num">×1</td><td class="num">¥8.0</td></tr>
+      <tr><td>儿童套餐（汉堡+小薯+牛奶）</td><td class="cat">main</td><td class="num">×1</td><td class="num">¥22.0</td></tr>
+        </tbody>
+      </table>
+      <ul class="metrics">
+        <li><span>蛋白质</span><b>27.0 g</b></li>
+        <li><span>合计</span><b>¥30.0</b></li>
+        <li><span>预估浪费</span><b class="warn">0% · ¥0.0</b></li>
+        <li><span>匹配度</span><b>93.81</b></li>
+      </ul>
+      <p class="price-line">菜单合计 ¥30.0（未含券，待 calculate-price 核价）</p>
+      <p class="reason">低于胃口线，适合真的不饿或想控制摄入。</p>
+      <div class="feedback">
+        <span class="fb-label">吃完回一句：</span>
+        <button type="button" onclick="pick('e70bd8948f57','fit','under',this)">没吃够</button>
+        <button type="button" onclick="pick('e70bd8948f57','fit','fit',this)">刚好</button>
+        <button type="button" onclick="pick('e70bd8948f57','fit','over',this)">有剩余</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h3>丰盛档</h3>
+        <span class="pill">730.0 kcal</span>
+      </div>
+      <pre class="bar">[==============|·······]</pre>
+      <p class="bar-note">| 为胃口线，= 为本档份量</p>
+      <table class="items">
+        <thead><tr><th>餐品</th><th>类别</th><th>份数</th><th>小计</th></tr></thead>
+        <tbody>
+      <tr><td>吉士蛋麦满分</td><td class="cat">main</td><td class="num">×2</td><td class="num">¥24.0</td></tr>
+      <tr><td>热牛奶</td><td class="cat">drink</td><td class="num">×1</td><td class="num">¥8.0</td></tr>
+        </tbody>
+      </table>
+      <ul class="metrics">
+        <li><span>蛋白质</span><b>41.0 g</b></li>
+        <li><span>合计</span><b>¥32.0</b></li>
+        <li><span>预估浪费</span><b class="warn">3% · ¥0.99</b></li>
+        <li><span>匹配度</span><b>94.04</b></li>
+      </ul>
+      <p class="price-line">菜单合计 ¥32.0（未含券，待 calculate-price 核价）</p>
+      <p class="reason">贴近胃口线，是最接近「刚刚好」的一档。</p>
+      <div class="feedback">
+        <span class="fb-label">吃完回一句：</span>
+        <button type="button" onclick="pick('e70bd8948f57','generous','under',this)">没吃够</button>
+        <button type="button" onclick="pick('e70bd8948f57','generous','fit',this)">刚好</button>
+        <button type="button" onclick="pick('e70bd8948f57','generous','over',this)">有剩余</button>
+      </div>
+    </section>
+  </section>
+
+  <div class="fb-out" id="fbOut">
+    <div>已记录，把这段 JSON 追加到本地 <code>history.jsonl</code>，
+或执行 <code>python scripts/apply_feedback.py --history history.jsonl --plan-id &lt;id&gt; --result &lt;under|fit|over&gt;</code>：</div>
+    <code id="fbJson"></code>
+    <button type="button" onclick="copyFb()">复制反馈 JSON</button>
+  </div>
+
+  <footer>
+    <p>非麦当劳官方产品，输出仅供参考，不构成医疗、营养或其他专业建议；餐品信息、价格及供应状态以麦当劳官方渠道实时结果为准。</p>
+    <p>数据来源：内置样例数据（离线演示，非实时）。门店：样例门店（离线演示）</p>
+    <p>以上为建议与官方核价结果，尚未下单；确认下单需由用户明确授权后再调用 create-order。</p>
+    <p>生成时间：2026-10-10T16:59:20+08:00 · 方案 ID：e70bd8948f57</p>
+  </footer>
+</div>
+
+<script>
+  var current = null;
+  function pick(planId, tierId, result, btn) {
+    var box = document.getElementById('fbOut');
+    var out = document.getElementById('fbJson');
+    var siblings = btn.parentNode.querySelectorAll('button');
+    for (var i = 0; i < siblings.length; i++) { siblings[i].classList.remove('active'); }
+    btn.classList.add('active');
+    current = {
+      type: 'feedback',
+      plan_id: planId,
+      tier: tierId,
+      result: result,
+      ts: new Date().toISOString()
+    };
+    out.textContent = JSON.stringify(current);
+    box.classList.add('show');
+  }
+  function copyFb() {
+    if (!current) { return; }
+    var text = JSON.stringify(current);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text);
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+    var btn = document.querySelector('#fbOut button');
+    var old = btn.textContent;
+    btn.textContent = '已复制';
+    setTimeout(function () { btn.textContent = old; }, 1500);
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+history.jsonl
+demo_plan*.json
+plan.json
+report.html
+demo_report.html
+__pycache__/
+*.pyc
+.env
