@@ -96,19 +96,42 @@
 
 Skill 会自动走完整流程：定位门店 → 取菜单与营养 → 读历史 → 份量规划 → 官方核价 → 输出三档建议。
 
-### 方式二：命令行
+### 方式二：命令行（真实 MCP，完整链路）
 
 ```bash
-# 1. 份量规划
+# 0. 把 Token 放进本地 .env（已被 .gitignore 排除，不会进 Git）
+echo "MCD_MCP_TOKEN=你的Token" > .env
+
+# 1. 校验连通性，列出 35 个工具
+python scripts/mcd_mcp_client.py ping
+python scripts/mcd_mcp_client.py tools-list
+
+# 2. 定位门店（收藏为空时用城市+关键词）
+python scripts/mcd_mcp_client.py fetch-stores --city 济南 --keyword 济南 --out stores.json
+
+# 3. 取营养表与门店菜单
+python scripts/mcd_mcp_client.py fetch-nutrition --out nutrition.json
+python scripts/mcd_mcp_client.py fetch-menu --store-code 3350050 --out candidates.json
+
+# 4. 拆解套餐，累加真实热量
+python scripts/refine_combos.py --candidates candidates.json \
+  --nutrition nutrition.json --store-code 3350050 --out candidates_refined.json
+
+# 5. 份量规划
 python scripts/plan_just_enough.py \
-  --people 1 --appetite normal --scene solo --dining dine_in --budget 40 \
-  --candidates candidates.json \
-  --out plan.json
+  --people 1 --appetite normal --scene solo --dining dine_in --budget 45 \
+  --candidates candidates_refined.json --nutrition nutrition.json \
+  --data-source mcp --store "麦当劳济南火车站站外广场餐厅" --out plan.json
 
-# 2. 生成单文件 HTML 报告
-python scripts/build_report.py --plan plan.json --store "南京西路店" --out report.html
+# 6. 官方核价（只核价，不下单）
+python scripts/check_price.py --plan plan.json --all-tiers \
+  --store-code 3350050 --out price.json
 
-# 3. 餐后反馈
+# 7. 生成单文件 HTML 报告
+python scripts/build_report.py --plan plan.json --price price.json \
+  --store "麦当劳济南火车站站外广场餐厅" --out report.html
+
+# 8. 餐后反馈
 python scripts/apply_feedback.py --history history.jsonl --plan-id <plan_id> --result over
 ```
 
@@ -124,7 +147,7 @@ python scripts/apply_feedback.py --history history.jsonl --plan-id <plan_id> --r
 | `--avoid` | 忌口标签，逗号分隔，如 `辣,碳酸` |
 | `--data-source` | `mcp` 真实数据 / `sample` 样例数据 |
 
-### 离线演示
+### 离线演示（无 Token）
 
 ```bash
 python scripts/plan_just_enough.py \
@@ -133,6 +156,21 @@ python scripts/plan_just_enough.py \
 
 python scripts/build_report.py --plan demo_plan.json --out demo_report.html
 ```
+
+### 真实取数快照
+
+`examples/real_*.json` 是一次真实调用的完整留档，无需 Token 即可复盘：
+
+| 文件 | 内容 |
+|---|---|
+| `real_stores_jinan.json` | `query-nearby-stores` 返回的 5 家济南门店 |
+| `real_nutrition.json` | `list-nutrition-foods` 返回的 160 条餐品营养 |
+| `real_menu_3350050.json` | `query-meals` + `query-meal-detail` 得到的 87 个在售餐品 |
+| `real_plan.json` | 引擎输出的三档方案 |
+| `real_price.json` | `calculate-price` 的官方核价结果 |
+| `demo-report.html` | 上述数据生成的报告，可直接打开 |
+
+实测：保守 ¥31.0 / 刚好 ¥37.5 / 丰盛 ¥45.0，官方核价与引擎按菜单价的估算**完全一致**。
 
 ---
 
@@ -172,16 +210,24 @@ mcd-just-enough/
 ├── mcp-config.example.json         MCP 配置示例（仅环境变量占位符）
 ├── workbuddy.md                    WorkBuddy 开发上下文
 ├── scripts/
-│   ├── plan_just_enough.py         份量规划引擎
-│   ├── build_report.py             单文件 HTML 报告生成器
-│   └── apply_feedback.py           餐后反馈写入
+│   ├── mcd_mcp_client.py         MCP 客户端：ping / tools-list / call / fetch-*
+│   ├── refine_combos.py          套餐拆解，累加真实热量
+│   ├── plan_just_enough.py       份量规划引擎
+│   ├── check_price.py            官方核价（calculate-price）
+│   ├── build_report.py           单文件 HTML 报告生成器
+│   └── apply_feedback.py         餐后反馈写入
 ├── references/
-│   ├── portion-model.md            份量与浪费模型
-│   ├── mcp-tools.md                工具清单与调用约束
-│   └── history-format.md           历史与反馈数据格式
-└── examples/
-    └── sample_menu.json            离线演示样例菜单
+│   ├── portion-model.md          份量与浪费模型
+│   ├── mcp-tools.md              35 个工具清单与实测入参要点
+│   └── history-format.md         历史与反馈数据格式
+├── examples/
+│   ├── sample_menu.json          离线演示样例菜单
+│   ├── real_*.json               真实接口取数快照
+│   └── demo-report.html          真实数据生成的报告
+└── .env                          本地 Token（不进 Git）
 ```
+
+全部脚本仅使用 Python 标准库，无需安装任何依赖。
 
 ---
 

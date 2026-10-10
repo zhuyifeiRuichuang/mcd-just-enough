@@ -58,6 +58,7 @@ PENALTY_BUDGET = 40.0
 PENALTY_MISS = 15.0
 PENALTY_DEVIATION_CAP = 30.0
 PENALTY_FAR = 80.0
+PENALTY_ESTIMATED = 8.0     # 每出现一个「估算营养」的餐品扣分，优先选真实数据
 DEVIATION_CAP = 0.15        # 超过胃口线 15% 视为明显偏离
 BUDGET_TOLERANCE = 1.25     # 超过预算 25% 的组合直接不考虑
 
@@ -167,13 +168,30 @@ def deviation(satiety: float, target: float) -> tuple:
     return effective * (1.8 if rel > 0 else 1.0), abs(rel) > DEVIATION_CAP
 
 
+def provides_of(cand: dict) -> set:
+    """该餐品能满足的营养/结构角色。
+
+    套餐（combo）由 query-meal-detail 拆解为「主食 + 小食 + 饮品」，
+    因此视作同时提供这三类角色，避免引擎再叠加一份主食或饮品导致过量。
+    """
+    explicit = cand.get("provides")
+    if explicit:
+        return set(explicit)
+    cat = cand.get("category", "other")
+    if cat == "combo":
+        return {"main", "side", "drink"}
+    return {cat}
+
+
 def missing_goals(combo: list, need: dict) -> int:
     """应满足但未满足的软目标数量。"""
     miss = 0
-    cats = {c.get("category", "other") for c, _ in combo}
-    if "main" not in cats:
+    roles = set()
+    for cand, _ in combo:
+        roles |= provides_of(cand)
+    if "main" not in roles:
         miss += 1
-    if need["dining"] != "takeout" and "drink" not in cats:
+    if need["dining"] != "takeout" and "drink" not in roles:
         miss += 1
     return miss
 
@@ -328,6 +346,9 @@ def tier_score(m: dict, target: float, budget: float) -> tuple:
         excess = (m["price"] - budget) / budget
         score -= PENALTY_BUDGET * (0.3 + excess)
     score -= PENALTY_MISS * m["missing"]
+    # 营养表未覆盖的新品只能按同类均值估算，可信度低于真实数据，逐项扣分
+    est = sum(1 for c, _ in m["combo"] if c.get("estimated"))
+    score -= PENALTY_ESTIMATED * est
     return score, rel_dev
 
 
@@ -338,48 +359,51 @@ def attach_waste(m: dict, need: dict, target: float, nutrition: dict) -> dict:
     return m
 
 
-def derive_variants(base: dict, pool_meta: list, need: dict, nutrition: dict) -> tuple:
+def derive_variants(base: dict, pool_meta: list, need: dict, nutrition: dict,
+                    gap: float) -> tuple:
     """由「刚好」档派生保守档与丰盛档。
 
-    保守：去掉一份可选小食/甜品/饮品。
-    丰盛：加一份小食或甜品；若已到件数上限，则把某一份的数量加 1。
+    保守：去掉一份可选小食/甜品/饮品（优先去掉饱腹贡献最小的）。
+    丰盛：补一件最贴合缺口的小食或甜品；没有合适的小食/甜品才考虑主食，
+          最后才考虑饮品，且绝不靠把已有饮品加量来凑。
     """
     base_combo = list(base["combo"])
-    codes_in_base = {c.get("code", "") for c, _ in base_combo}
-    max_items = max_items_for(need)
+    base_codes = {c.get("code", "") for c, _ in base_combo}
+    base_names = {c.get("name", "") for c, _ in base_combo}
 
     conservative = None
-    for cand, qty in reversed(base_combo):
-        if cand.get("optional") is False:
-            continue
+    optional = [(i, c, q) for i, (c, q) in enumerate(base_combo)
+                if c.get("optional") is not False]
+    if optional:
+        idx, cand, qty = min(
+            optional, key=lambda t: (item_satiety(t[1], nutrition),
+                                     -float(t[1].get("price", 0) or 0)))
         trial = []
-        dropped = False
-        for c, q in base_combo:
-            if not dropped and c is cand and q == qty:
+        for i, (c, q) in enumerate(base_combo):
+            if i == idx:
                 if q > 1:
                     trial.append((c, q - 1))
-                dropped = True
                 continue
             trial.append((c, q))
-        if dropped and trial:
+        if trial:
             conservative = trial
-            break
 
     generous = None
-    extras = [c for c in pool_meta if c.get("code", "") not in codes_in_base]
-    preferred = [c for c in extras if c.get("category") in ("side", "dessert", "drink")]
-    candidates_extra = preferred or extras
-    if candidates_extra and sum(q for _, q in base_combo) < max_items:
-        best_extra = max(
-            candidates_extra,
-            key=lambda c: (item_satiety(c, nutrition), -float(c.get("price", 0) or 0)),
+    extras = [c for c in pool_meta
+              if c.get("code", "") not in base_codes
+              and c.get("name", "") not in base_names]
+    for cats in (("side", "dessert"), ("main",), ("drink",)):
+        pool = [c for c in extras if c.get("category") in cats]
+        if not pool:
+            continue
+        best = min(
+            pool,
+            key=lambda c: (abs(item_satiety(c, nutrition) - gap),
+                           float(c.get("price", 0) or 0),
+                           1 if c.get("estimated") else 0),
         )
-        generous = base_combo + [(best_extra, 1)]
-    else:
-        for cand, qty in base_combo:
-            if qty < int(cand.get("max_qty", 1) or 1):
-                generous = [(c, (q + 1) if c is cand else q) for c, q in base_combo]
-                break
+        generous = base_combo + [(best, 1)]
+        break
 
     return conservative, generous
 
@@ -638,8 +662,10 @@ def main() -> int:
     base = all_metrics[0]
     base_satiety = base["satiety"]
 
+    # 丰盛档的缺口：目标饱腹比「刚好」档多出的部分，用它去挑最合适的加菜
+    gap = max(0.0, target_satiety(need, 1.22) - base_satiety)
     conservative_combo, generous_combo = derive_variants(
-        base, candidates, need, nutrition
+        base, candidates, need, nutrition, gap
     )
 
     tiers = []

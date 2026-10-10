@@ -123,9 +123,39 @@ def tier_card(tier: dict, plan: dict) -> str:
     )
 
 
-def build_html(plan: dict, store: str) -> str:
+def build_price_html(price_payload) -> str:
+    """把 calculate-price 的真实核价结果渲染进报告。"""
+    if not price_payload:
+        return ""
+    rows = []
+    for r in price_payload.get("results", []):
+        fields = r.get("fields") or {}
+        payable = fields.get("payable")
+        discount = fields.get("discount") or 0
+        if payable is None:
+            continue
+        extra = "，优惠 ¥{}".format(discount) if discount else ""
+        rows.append((r.get("label") or r.get("tier") or "",
+                     "¥{}".format(payable) + extra))
+    if not rows:
+        return ""
+    cells = "\n".join('      <div><span>{}</span><b>{}</b></div>'.format(esc(k), esc(v))
+                      for k, v in rows)
+    return """  <section class="summary">
+    <h2>官方核价（calculate-price）</h2>
+    <div class="grid">
+{}
+    </div>
+    <p class="muted">金额来自麦当劳 MCP calculate-price 实时试算，只核价不下单；
+估算价由引擎按菜单价计算，与官方结果一致说明价格链路可信。</p>
+  </section>
+""".format(cells)
+
+
+def build_html(plan: dict, store: str, price_payload=None) -> str:
     need = plan.get("need", {})
     tiers_html = "\n".join(tier_card(t, plan) for t in plan.get("tiers", []))
+    price_html = build_price_html(price_payload)
 
     source_text = "麦当劳官方 MCP 实时数据" if plan.get("data_source") == "mcp" \
         else "内置样例数据（离线演示，非实时）"
@@ -271,6 +301,7 @@ def build_html(plan: dict, store: str) -> str:
   <section class="tiers">
 {tiers}
   </section>
+{price}
 
   <div class="fb-out" id="fbOut">
     <div>已记录，把这段 JSON 追加到本地 <code>history.jsonl</code>，
@@ -339,6 +370,7 @@ def build_html(plan: dict, store: str) -> str:
         samples=esc(plan.get("feedback_samples", 0)),
         first_use=first_use,
         tiers=tiers_html,
+        price=price_html,
         disclaimer=esc(plan.get("disclaimer", "")),
         store=esc(("门店：" + store) if store else ""),
         created=esc(plan.get("created_at", "")),
@@ -351,12 +383,19 @@ def main() -> int:
     parser.add_argument("--plan", required=True)
     parser.add_argument("--store", default="")
     parser.add_argument("--out", default="report.html")
+    parser.add_argument("--price", default="",
+                        help="check_price.py 输出的核价 JSON，渲染为官方核价区块")
     args = parser.parse_args()
 
     with open(args.plan, "r", encoding="utf-8") as fh:
         plan = json.load(fh)
 
-    html_text = build_html(plan, args.store)
+    price_payload = None
+    if args.price and os.path.exists(args.price):
+        with open(args.price, "r", encoding="utf-8") as fh:
+            price_payload = json.load(fh)
+
+    html_text = build_html(plan, args.store, price_payload)
     with open(args.out, "w", encoding="utf-8") as fh:
         fh.write(html_text)
 

@@ -30,6 +30,7 @@ description: 麦当劳「刚刚好」点餐决策 Skill。基于麦当劳官方 
 3. **停在付款前**：只读建议 + 官方核价，不代替用户下单，不触碰支付。
 4. **会学习**：餐后一句反馈（没吃够 / 刚好 / 有剩余）即可修正个人份量系数。
 5. **不浪费**：预估浪费率与浪费金额是主输出，不是附加信息。
+6. **数据可信度透明**：营养表未覆盖的新品按同类均值估算，并在结果中显式标注。
 
 ## 标准工作流
 
@@ -47,16 +48,31 @@ description: 麦当劳「刚刚好」点餐决策 Skill。基于麦当劳官方 
 
 ### 第 2 步：定位门店
 
-- 堂食 / 得来速：`query-nearby-stores`
-- 麦乐送 / 团餐：先 `delivery-query-addresses` 再 `delivery-query-stores`
+```bash
+python scripts/mcd_mcp_client.py fetch-stores --city 济南 --keyword 济南 --out stores.json
+```
 
-记录 `storeCode`。用 `now-time-info` 取当前时间，判断是否早餐/正餐/夜宵时段。
+- 堂食 / 得来速：`query-nearby-stores`（`beType=1` 到店自提，`beType=5` 得来速）
+- 麦乐送：`delivery-query-addresses` → `delivery-query-stores`
+- 用 `now-time-info` 取当前时间，判断早餐 / 正餐 / 夜宵时段
+
+记录 `storeCode`；到店场景不传 `beCode`，外送场景需要传。
 
 ### 第 3 步：取菜单与营养
 
-- `query-meals` 取当前门店在售菜单（分类、餐品编码、标签）
-- `query-meal-detail` 拆解套餐组成、轮次选配、可替换项与特调
+```bash
+python scripts/mcd_mcp_client.py fetch-nutrition --out nutrition.json
+python scripts/mcd_mcp_client.py fetch-menu --store-code <storeCode> --out candidates.json
+```
+
+- `query-meals` 取在售菜单（分类、餐品编码、价格）
 - `list-nutrition-foods` 取真实营养数据（能量、蛋白质、脂肪、碳水、钠、钙）
+- 套餐在营养表里没有同名条目，用 `query-meal-detail` 拆解后累加：
+
+```bash
+python scripts/refine_combos.py --candidates candidates.json \
+  --nutrition nutrition.json --store-code <storeCode> --out candidates_refined.json
+```
 
 ### 第 4 步：读历史，建立个人份量系数
 
@@ -69,38 +85,40 @@ description: 麦当劳「刚刚好」点餐决策 Skill。基于麦当劳官方 
 
 ```bash
 python scripts/plan_just_enough.py \
-  --people 1 --appetite normal --scene solo --dining dine_in --budget 40 \
-  --candidates examples/sample_menu.json \
-  --history history.jsonl \
-  --out plan.json
+  --people 1 --appetite normal --scene solo --dining dine_in --budget 45 \
+  --candidates candidates_refined.json --nutrition nutrition.json \
+  --data-source mcp --store "<门店名>" --out plan.json
 ```
 
-无真实数据时：
+无 Token 时改用内置样例：
 
 ```bash
 python scripts/plan_just_enough.py \
-  --people 2 --appetite normal --scene pair --dining dine_in --budget 70 \
-  --candidates examples/sample_menu.json \
-  --data-source sample --out plan.json
+  --people 2 --appetite normal --scene pair --dining dine_in --budget 80 \
+  --candidates examples/sample_menu.json --data-source sample --out plan.json
 ```
 
-引擎会输出三档方案：保守、刚好、丰盛。计算逻辑见 `references/portion-model.md`。
+引擎输出三档：保守 / 刚好 / 丰盛。计算逻辑见 `references/portion-model.md`。
 
 ### 第 6 步：官方核价
 
-对三档方案分别调用 `query-store-coupons` 取本店可用券，再调用 `calculate-price` 核价。
+```bash
+python scripts/check_price.py --plan plan.json --all-tiers \
+  --store-code <storeCode> --out price.json
+```
 
-**券只认本店试算差值，不拿券包下结论。** 未领券时可先 `available-coupons` 查看、再 `auto-bind-coupons` 一键领取（领取需用户同意）。
-
-把核价结果回填进 `plan.json` 的 `official_price` 字段。
+- `query-store-coupons` 取本店可用券；**券只认本店 `calculate-price` 的试算差值，不拿券包列表下结论**
+- 未领券时可先 `available-coupons` 查看、再 `auto-bind-coupons` 一键领取（领取需用户同意）
+- `calculate-price` 返回金额单位为分，脚本已换算为元
 
 ### 第 7 步：生成报告
 
 ```bash
-python scripts/build_report.py --plan plan.json --store "示例门店" --out report.html
+python scripts/build_report.py --plan plan.json --price price.json \
+  --store "<门店名>" --out report.html
 ```
 
-生成单文件 HTML（内联 CSS/JS，无外部依赖），含三档方案对比、份量条、浪费预估与反馈按钮。
+生成单文件 HTML（内联 CSS/JS，无外部依赖），含三档方案对比、份量条、浪费预估、官方核价区块与反馈按钮。
 
 同时在对话内输出 Markdown 精简建议卡：三档各 3 行（组合 / 份量条 / 价格与浪费预估）。
 
@@ -134,6 +152,7 @@ python scripts/apply_feedback.py --history history.jsonl --plan-id <id> --result
 4. 预估浪费率与浪费金额
 5. 官方核价结果（商品金额、优惠、应付总价）
 6. 一句话理由：为什么这一档是“刚刚好”
+7. 若组合中含营养估算项，注明“部分新品按同类均值估算”
 
 ## 硬约束
 
@@ -142,16 +161,20 @@ python scripts/apply_feedback.py --history history.jsonl --plan-id <id> --result
 - 不得给出医疗、营养治疗或疾病相关建议；营养数据仅用于份量估算
 - 每次输出必须包含：非麦当劳官方产品、输出仅供参考、餐品与价格以官方实时结果为准
 - 不得代替用户下单或支付
-- 单 Token 每分钟不超过 600 次请求，注意控制调用频率
+- 单 Token 每分钟不超过 600 次请求；批量拆解套餐时保持温和限速
 
 ## 文件说明
 
 | 文件 | 作用 |
 |---|---|
+| `scripts/mcd_mcp_client.py` | 麦当劳 MCP Streamable HTTP 客户端（ping / tools-list / call / fetch-stores / fetch-menu / fetch-nutrition） |
+| `scripts/refine_combos.py` | 用 `query-meal-detail` 拆解套餐，累加真实热量 |
 | `scripts/plan_just_enough.py` | 份量规划引擎，输出三档方案 JSON |
+| `scripts/check_price.py` | 用 `calculate-price` 对三档做官方核价 |
 | `scripts/build_report.py` | 生成单文件 HTML 报告 |
 | `scripts/apply_feedback.py` | 写入餐后反馈并更新份量系数 |
 | `references/portion-model.md` | 份量与浪费模型说明 |
 | `references/mcp-tools.md` | 麦当劳 MCP 工具清单与调用约束 |
 | `references/history-format.md` | 历史与反馈数据格式 |
 | `examples/sample_menu.json` | 离线演示样例菜单（仅供无 Token 演示） |
+| `examples/real_*.json` | 真实接口取数快照，可离线复盘 |

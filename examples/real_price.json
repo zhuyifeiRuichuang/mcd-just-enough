@@ -1,0 +1,180 @@
+{
+  "store_code": "3350050",
+  "order_type": 1,
+  "be_type": 1,
+  "source_tool": "calculate-price",
+  "checked_at": "2026-10-10T17:15:22",
+  "results": [
+    {
+      "tier": "conservative",
+      "label": "保守",
+      "estimated_price": 31.0,
+      "items": [
+        {
+          "productCode": "1450",
+          "quantity": 1
+        },
+        {
+          "productCode": "3755",
+          "quantity": 1
+        }
+      ],
+      "official": {
+        "productOriginalPrice": 3100,
+        "productPrice": 3100,
+        "originalPrice": 3100,
+        "discount": 0,
+        "price": 3100,
+        "productList": [
+          {
+            "productCode": "1450",
+            "productName": "麦香鸡",
+            "quantity": 1,
+            "originalSubtotal": 1900,
+            "subtotal": 1900
+          },
+          {
+            "productCode": "3755",
+            "productName": "纯牛奶",
+            "quantity": 1,
+            "originalSubtotal": 1200,
+            "subtotal": 1200
+          }
+        ],
+        "takeWayList": [
+          {
+            "code": "eat-in",
+            "title": "堂食",
+            "subtitle": "店内用餐"
+          },
+          {
+            "code": "take-in-store",
+            "title": "外带",
+            "subtitle": "店内自提"
+          }
+        ]
+      },
+      "fields": {
+        "goods": 31.0,
+        "original": 31.0,
+        "discount": 0.0,
+        "delivery": null,
+        "payable": 31.0
+      }
+    },
+    {
+      "tier": "fit",
+      "label": "刚好",
+      "estimated_price": 37.5,
+      "items": [
+        {
+          "productCode": "1440",
+          "quantity": 1
+        },
+        {
+          "productCode": "3755",
+          "quantity": 1
+        }
+      ],
+      "official": {
+        "productOriginalPrice": 3750,
+        "productPrice": 3750,
+        "originalPrice": 3750,
+        "discount": 0,
+        "price": 3750,
+        "productList": [
+          {
+            "productCode": "1440",
+            "productName": "麦辣鸡腿汉堡",
+            "quantity": 1,
+            "originalSubtotal": 2550,
+            "subtotal": 2550
+          },
+          {
+            "productCode": "3755",
+            "productName": "纯牛奶",
+            "quantity": 1,
+            "originalSubtotal": 1200,
+            "subtotal": 1200
+          }
+        ],
+        "takeWayList": [
+          {
+            "code": "eat-in",
+            "title": "堂食",
+            "subtitle": "店内用餐"
+          },
+          {
+            "code": "take-in-store",
+            "title": "外带",
+            "subtitle": "店内自提"
+          }
+        ]
+      },
+      "fields": {
+        "goods": 37.5,
+        "original": 37.5,
+        "discount": 0.0,
+        "delivery": null,
+        "payable": 37.5
+      }
+    },
+    {
+      "tier": "generous",
+      "label": "丰盛",
+      "estimated_price": 45.0,
+      "items": [
+        {
+          "productCode": "3010",
+          "quantity": 1
+        },
+        {
+          "productCode": "511782",
+          "quantity": 1
+        }
+      ],
+      "official": {
+        "productOriginalPrice": 4500,
+        "productPrice": 4500,
+        "originalPrice": 4500,
+        "discount": 0,
+        "price": 4500,
+        "productList": [
+          {
+            "productCode": "3010",
+            "productName": "雪碧小杯",
+            "quantity": 1,
+            "originalSubtotal": 1000,
+            "subtotal": 1000
+          },
+          {
+            "productCode": "511782",
+            "productName": "芝士安格斯厚牛堡",
+            "quantity": 1,
+            "originalSubtotal": 3500,
+            "subtotal": 3500
+          }
+        ],
+        "takeWayList": [
+          {
+            "code": "eat-in",
+            "title": "堂食",
+            "subtitle": "店内用餐"
+          },
+          {
+            "code": "take-in-store",
+            "title": "外带",
+            "subtitle": "店内自提"
+          }
+        ]
+      },
+      "fields": {
+        "goods": 45.0,
+        "original": 45.0,
+        "discount": 0.0,
+        "delivery": null,
+        "payable": 45.0
+      }
+    }
+  ]
+}

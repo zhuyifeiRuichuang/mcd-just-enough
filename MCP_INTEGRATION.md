@@ -77,7 +77,48 @@ calculate-price
 
 ## 四、真实调用证据
 
-MCP_INTEGRATION 中记录的调用链已在开发过程中逐一验证：菜单取数、套餐拆解、营养取数、门店可用券查询与 `calculate-price` 核价均使用真实接口返回数据；`create-order` 仅在用户确认场景下调用。
+以下结果均来自真实接口调用（`examples/real_*.json` 为取数快照，已去除个人信息）。
+
+| 步骤 | Tool | 真实返回 |
+|---|---|---|
+| 连通性校验 | `initialize` | `serverInfo: mcd-mcp / 1.0.0`，`protocolVersion 2025-06-18` |
+| 工具发现 | `tools/list` | 35 个工具 |
+| 门店定位 | `query-nearby-stores` | 济南 5 家门店，含 `storeCode`、`营业时间`、预约时段 |
+| 菜单取数 | `query-meals` | 87 个在售餐品，12 个分类（人气热卖 / 精选单人餐 / 鸡肉汉堡 / 小食甜品 / 饮品 等） |
+| 营养取数 | `list-nutrition-foods` | 160 条餐品营养（能量 kJ/kcal、蛋白质、脂肪、碳水、钠、钙） |
+| 套餐拆解 | `query-meal-detail` | 10 个套餐按默认 `rounds[].choices[]` 拆解为组成单品后累加营养 |
+| 历史订单 | `order-list` | 近期到店/外送订单，含商品明细，用于个人食量基线 |
+| 官方核价 | `calculate-price` | 保守 ¥31.0 / 刚好 ¥37.5 / 丰盛 ¥45.0，与引擎按菜单价的估算**完全一致** |
+
+### 关键返回片段
+
+`query-meals` 返回 `{categories, meals}` 双层结构，分类里只有编码，详情在映射表里：
+
+```json
+{"categories": [{"name": "巨无霸\n牛鱼肉堡", "meals": [{"code": "1440"}]}],
+ "meals": {"1440": {"name": "麦辣鸡腿汉堡", "currentPrice": "25", "originalPrice": "25"}}}
+```
+
+`list-nutrition-foods` 返回自定义文本表，需解析后使用：
+
+```
+[160]{productName,nutritionDescription,energyKj,energyKcal,protein,fat,carbohydrate,sodium,calcium}:
+  巨无霸,null,2146,513,27,26,42,961,171
+```
+
+`calculate-price` 金额单位为分，`discount` 为优惠额：
+
+```json
+{"productOriginalPrice": 3750, "productPrice": 3750, "discount": 0, "price": 3750,
+ "productList": [{"productCode": "1440", "productName": "麦辣鸡腿汉堡", "quantity": 1,
+                  "originalSubtotal": 2550, "subtotal": 2550}]}
+```
+
+### 数据可信度说明
+
+- 营养表覆盖 51/87 个在售餐品，未覆盖的新品按同类均值估算，结果中显式标注 `estimated`
+- 引擎对估算项额外扣分，优先选择营养数据真实的餐品
+- `create-order` 未在无确认场景调用过，全程停在付款前
 
 离线演示模式（`--data-source sample`）使用 `examples/sample_menu.json`，仅用于无 Token 时展示引擎与报告效果，不代表真实接口数据。
 

@@ -1,0 +1,141 @@
+{
+  "plan_id": "964e70effd45",
+  "created_at": "2026-10-10T17:14:13+08:00",
+  "skill": "mcd-just-enough",
+  "version": "1.0.0",
+  "data_source": "mcp",
+  "store": "麦当劳济南火车站站外广场餐厅",
+  "need": {
+    "people": 1,
+    "appetite": "normal",
+    "scene": "solo",
+    "dining": "dine_in",
+    "budget": 45.0,
+    "avoid": [],
+    "feedback_factor": 1.0
+  },
+  "need_kcal": 700.0,
+  "feedback_factor": 1.0,
+  "feedback_samples": 0,
+  "tiers": [
+    {
+      "tier": "conservative",
+      "label": "保守",
+      "items": [
+        {
+          "code": "1450",
+          "codes": [
+            "1450"
+          ],
+          "name": "麦香鸡",
+          "category": "main",
+          "qty": 1,
+          "price": 19.0,
+          "subtotal": 19.0
+        },
+        {
+          "code": "3755",
+          "codes": [
+            "3755"
+          ],
+          "name": "纯牛奶(盒装)",
+          "category": "drink",
+          "qty": 1,
+          "price": 12.0,
+          "subtotal": 12.0
+        }
+      ],
+      "price": 31.0,
+      "kcal": 498.0,
+      "protein": 22.0,
+      "satiety": 6.99,
+      "target": 7.17,
+      "need": 700.0,
+      "waste_ratio": 0.0,
+      "waste_cost": 0.0,
+      "score": 95.04,
+      "reason": "低于胃口线，适合真的不饿或想控制摄入。",
+      "official_price": null
+    },
+    {
+      "tier": "fit",
+      "label": "刚好",
+      "items": [
+        {
+          "code": "1440",
+          "codes": [
+            "1440"
+          ],
+          "name": "麦辣鸡腿汉堡",
+          "category": "main",
+          "qty": 1,
+          "price": 25.5,
+          "subtotal": 25.5
+        },
+        {
+          "code": "3755",
+          "codes": [
+            "3755"
+          ],
+          "name": "纯牛奶(盒装)",
+          "category": "drink",
+          "qty": 1,
+          "price": 12.0,
+          "subtotal": 12.0
+        }
+      ],
+      "price": 37.5,
+      "kcal": 614.0,
+      "protein": 31.0,
+      "satiety": 8.84,
+      "target": 8.96,
+      "need": 700.0,
+      "waste_ratio": 0.0,
+      "waste_cost": 0.0,
+      "score": 94.0,
+      "reason": "低于胃口线，适合真的不饿或想控制摄入。",
+      "official_price": null
+    },
+    {
+      "tier": "generous",
+      "label": "丰盛",
+      "items": [
+        {
+          "code": "3010",
+          "codes": [
+            "3010"
+          ],
+          "name": "雪碧",
+          "category": "drink",
+          "qty": 1,
+          "price": 10.0,
+          "subtotal": 10.0
+        },
+        {
+          "code": "511782",
+          "codes": [
+            "511782"
+          ],
+          "name": "芝士安格斯厚牛堡",
+          "category": "main",
+          "qty": 1,
+          "price": 35.0,
+          "subtotal": 35.0
+        }
+      ],
+      "price": 45.0,
+      "kcal": 801.0,
+      "protein": 32.0,
+      "satiety": 11.01,
+      "target": 10.93,
+      "need": 700.0,
+      "waste_ratio": 0.0946,
+      "waste_cost": 4.26,
+      "score": 90.44,
+      "reason": "高于胃口线，适合很饿或两人分享，注意可能吃不完。",
+      "official_price": null
+    }
+  ],
+  "disclaimer": "非麦当劳官方产品，输出仅供参考，不构成医疗、营养或其他专业建议；餐品信息、价格及供应状态以麦当劳官方渠道实时结果为准。",
+  "markdown": "## 麦麦刚刚好 · 份量建议\n\n- 场景：1 人 · normal · solo · dine_in\n- 预算：45.0 元\n- 胃口线：约 700.0 kcal（个人份量系数 1.0，历史反馈 0 条）\n- 数据来源：mcp\n\n### 保守档：麦香鸡×1 + 纯牛奶(盒装)×1\n\n- 份量条：`[=======···|·····]`\n- 498.0 kcal · 蛋白 22.0 g · 合计 ¥31.0\n- 预估浪费率 0%（约 ¥0.0）\n- 低于胃口线，适合真的不饿或想控制摄入。\n\n### 刚好档：麦辣鸡腿汉堡×1 + 纯牛奶(盒装)×1\n\n- 份量条：`[=========·|·····]`\n- 614.0 kcal · 蛋白 31.0 g · 合计 ¥37.5\n- 预估浪费率 0%（约 ¥0.0）\n- 低于胃口线，适合真的不饿或想控制摄入。\n\n### 丰盛档：雪碧×1 + 芝士安格斯厚牛堡×1\n\n- 份量条：`[==========|·····]`\n- 801.0 kcal · 蛋白 32.0 g · 合计 ¥45.0\n- 预估浪费率 9%（约 ¥4.26）\n- 高于胃口线，适合很饿或两人分享，注意可能吃不完。\n\n> 以上为建议与官方核价结果，尚未下单。确认后我再调用 create-order。\n> 非麦当劳官方产品，输出仅供参考，餐品信息与价格以官方实时结果为准。"
+}

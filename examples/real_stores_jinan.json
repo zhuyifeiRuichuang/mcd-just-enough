@@ -1,0 +1,52 @@
+{
+  "fetched_at": "2026-10-10T17:10:08",
+  "source_tool": "query-nearby-stores",
+  "params": {
+    "beType": 1,
+    "searchType": 2,
+    "city": "济南",
+    "keyword": "济南"
+  },
+  "stores": [
+    {
+      "storeCode": "3350050",
+      "storeName": "麦当劳济南火车站站外广场餐厅",
+      "address": "车站街１１５号（火车站站外餐厅）",
+      "distance": 156,
+      "businessStatus": true,
+      "businessHours": "07:00-23:59"
+    },
+    {
+      "storeCode": "3350270",
+      "storeName": "麦当劳济南堤口路IS餐厅",
+      "address": "堤口路68号南益K88一楼东侧麦当劳",
+      "distance": 846,
+      "businessStatus": true,
+      "businessHours": "07:00-23:00"
+    },
+    {
+      "storeCode": "3350056",
+      "storeName": "麦当劳济南经四路万达餐厅",
+      "address": "经四路北侧万达广场步行街西门二层、三层267商铺",
+      "distance": 1346,
+      "businessStatus": true,
+      "businessHours": "10:00-22:00"
+    },
+    {
+      "storeCode": "3350314",
+      "storeName": "麦当劳济南山东商会大厦IS餐厅",
+      "address": "经五路与纬二路交叉口西南角",
+      "distance": 1395,
+      "businessStatus": true,
+      "businessHours": "06:00-23:00"
+    },
+    {
+      "storeCode": "3350007",
+      "storeName": "麦当劳济南人民商场餐厅",
+      "address": "经四路东首13号",
+      "distance": 1500,
+      "businessStatus": true,
+      "businessHours": "06:00-02:00"
+    }
+  ]
+}
