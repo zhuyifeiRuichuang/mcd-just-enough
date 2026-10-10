@@ -697,7 +697,7 @@ def main() -> int:
         "plan_id": uuid.uuid4().hex[:12],
         "created_at": dt.datetime.now().astimezone().isoformat(timespec="seconds"),
         "skill": "mcd-just-enough",
-        "version": "1.0.0",
+        "version": "1.1.0",
         "data_source": args.data_source,
         "store": args.store,
         "need": need,

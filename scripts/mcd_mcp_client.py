@@ -116,7 +116,7 @@ def initialize(token: str, url: str) -> dict:
     return rpc("initialize", {
         "protocolVersion": PROTOCOL_VERSION,
         "capabilities": {},
-        "clientInfo": {"name": "mcd-just-enough", "version": "1.0.0"},
+        "clientInfo": {"name": "mcd-just-enough", "version": "1.1.0"},
     }, token, url)
 
 

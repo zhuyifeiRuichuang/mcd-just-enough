@@ -2,6 +2,8 @@
 
 项目地址：https://github.com/zhuyifeiRuichuang/mcd-just-enough
 
+当前版本：**v1.1.0**（[更新日志](CHANGELOG.md) · [全部版本](https://github.com/zhuyifeiRuichuang/mcd-just-enough/releases)）
+
 点麦当劳最常见的浪费不是点贵了，而是**点多了**：单人套餐吃不完、双人点三件套剩一堆、给孩子点成人份、加班夜宵怕撑又怕饿。
 
 麦麦刚刚好不追求「最便宜」，也不追求「热量最低」，只回答一个没人回答的问题：
@@ -205,6 +207,7 @@ HTML 报告为单文件，内联 CSS 与 JS，无任何外部依赖，可直接�
 mcd-just-enough/
 ├── SKILL.md                        Skill 入口与标准工作流
 ├── README.md                       本文档
+├── CHANGELOG.md                    版本更新日志
 ├── MCP_INTEGRATION.md              MCP 调用说明与业务价值
 ├── CONTEST_DECLARATION.md          参赛声明（官方文件，不得修改）
 ├── mcp-config.example.json         MCP 配置示例（仅环境变量占位符）
